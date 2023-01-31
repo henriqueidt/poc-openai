@@ -3,18 +3,19 @@ import styles from "./codeHelper.module.css";
 
 const CodeHelper = () => {
   const [functionInput, setFunctionInput] = useState("");
-  const [testsCount, setTestsCount] = useState(0);
   const [result, setResult] = useState();
+  const [isLoading, setIsLoading] = useState(false);
 
-  async function onSubmit(event) {
-    event.preventDefault();
+  async function onSubmit(isTest) {
+    setResult(null);
+    setIsLoading(true);
     try {
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ functionInput, testsCount }),
+        body: JSON.stringify({ functionInput, isTest }),
       });
 
       const data = await response.json();
@@ -28,25 +29,27 @@ const CodeHelper = () => {
       setResult(data.result);
     } catch (error) {
       console.error(error);
-      alert(error.message);
+    } finally {
+      setIsLoading(false);
     }
   }
   return (
     <div>
-      <form onSubmit={onSubmit}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
+        className={styles.form}
+      >
         <textarea
           name="functionInput"
           placeholder="Enter a function"
           value={functionInput}
           onChange={(e) => setFunctionInput(e.target.value)}
+          className={styles.textarea}
         />
-        <input
-          type="number"
-          name="testsCount"
-          value={testsCount}
-          onChange={(e) => setTestsCount(e.target.value)}
-        />
-        <input type="submit" value="Generate tests" />
+        <button onClick={() => onSubmit(true)}>Generate tests</button>
+        <button onClick={() => onSubmit(false)}>Generate documentation</button>
       </form>
       <div>
         {result ? (
@@ -57,6 +60,7 @@ const CodeHelper = () => {
             }}
           />
         ) : null}
+        {isLoading ? "Loading..." : null}
       </div>
     </div>
   );

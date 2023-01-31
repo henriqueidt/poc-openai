@@ -1,3 +1,11 @@
+.form {
+  width: 50vw;
+}
+
+.textarea {
+  height: 50vh;
+}
+
 .result {
   white-space: pre-wrap;
 }

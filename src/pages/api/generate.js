@@ -5,13 +5,24 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-const buildPrompt = ({ functionInput, testsCount = 1 }) => {
-  return `
-    // Javascript
-    ${functionInput}
+const buildPrompt = ({ functionInput, isTest }) => {
+  let suffix = "Unit tests for the above function:";
+  if (!isTest) {
+    suffix =
+      "Inline JavaScript documentation for the above function, with an explanation of what it does:";
+  }
+  return `${functionInput}
+${isTest ? "" : `"""`}
+${suffix}${isTest ? "" : `\n\n`}`.replaceAll("\n}", "\n }");
+};
 
-    // Unit tests with ${testsCount} expects
-  `;
+const buildStop = ({ isTest }) => {
+  if (isTest) {
+    // prettier-ignore
+    return ["\"\"\"", "//", "/*", "*/"]
+  }
+  // prettier-ignore
+  return ["\"\"\""]
 };
 
 export default async function handler(req, res) {
@@ -26,11 +37,12 @@ export default async function handler(req, res) {
    **/
   const openAiParameters = {
     model: "code-davinci-002",
-    prompt: buildPrompt(req.body) || "",
+    prompt: buildPrompt(req.body),
     temperature: 0,
-    max_tokens: 1024,
-    frequency_penalty: 0.5,
-    presence_penalty: 0.5,
+    max_tokens: 1688,
+    frequency_penalty: 0,
+    presence_penalty: 0,
+    stop: buildStop(req.body),
   };
 
   const response = await openai.createCompletion(openAiParameters);
